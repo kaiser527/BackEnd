@@ -6,32 +6,54 @@ const {
 } = require("../services/CRUD");
 
 const getHomePage = (req, res) => {
-  //process data
-  res.send("Backend Side");
+  return res.send("Backend Side");
 };
 
 const getUserPage = async (req, res) => {
   let results = await getAllUsers();
-  return res.json(results);
+  return res.status(200).json(results);
 };
 
 const postCreateUser = async (req, res) => {
-  let { email, name, city, userId } = req.body;
-  await createNewUser(email, name, city, userId);
-  return res.send("create-user");
+  let { email, name, city } = req.body;
+  if (!email || !name || !city) {
+    res.status(500).json({
+      errCode: 1,
+      errMessage: "Missing required paramenters !",
+    });
+  } else {
+    await createNewUser(email, name, city);
+    return res.status(200).json({
+      errCode: 0,
+      message: "Create user succeed !",
+    });
+  }
 };
 
 const putUpdateUser = async (req, res) => {
   let userId = req.params.id;
   let { email, name, city } = req.body;
-  await updateUserById(email, name, city, userId);
-  return res.send("update-user");
+  if (!email || !name || !city) {
+    res.status(500).json({
+      errCode: 1,
+      errMessage: "Missing required paramenters !",
+    });
+  } else {
+    await updateUserById(email, name, city, userId);
+    return res.status(200).json({
+      errCode: 0,
+      message: `User with ID: ${userId} is updated !`,
+    });
+  }
 };
 
 const deleteUser = async (req, res) => {
   let userId = req.params.id;
   await deleteUserById(userId);
-  res.send("delete-user");
+  return res.status(200).json({
+    errCode: 0,
+    message: `User with ID: ${userId} is deleted !`,
+  });
 };
 
 module.exports = {
