@@ -71,7 +71,7 @@ const updateUserService = (data) => {
         });
       } else {
         let check = await checkUserEmail(data.email);
-        if (check) {
+        if (check && user.email !== data.email) {
           resolve({
             errCode: -1,
             errMessage: "User is already exist!",
