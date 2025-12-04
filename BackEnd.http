@@ -1,0 +1,4 @@
+GET https://localhost:7136/swagger
+Accept: application/json
+
+
