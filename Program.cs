@@ -1,7 +1,6 @@
 using BackEnd.Domain.Contracts;
 using BackEnd.Domain.Entities;
 using BackEnd.Domain.Interfaces;
-using BackEnd.Exceptions;
 using BackEnd.Extensions;
 using BackEnd.Infrastructure.Context;
 using BackEnd.Infrastructure.Mapping;
@@ -16,8 +15,6 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 
 builder.Services.AddHttpContextAccessor();
-
-builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
 builder.Services.AddProblemDetails();
 
@@ -93,8 +90,6 @@ using (var scope = app.Services.CreateScope())
 
     await SeedUsers.Initialize(userManager);
 }
-
-app.UseExceptionHandler();
 
 app.UseHttpsRedirection();
 

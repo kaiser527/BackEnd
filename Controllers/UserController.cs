@@ -31,7 +31,7 @@ namespace BackEnd.Controllers
 
                 return Ok(apiResponse);
             }
-            catch(Exception ex)
+            catch(BadHttpRequestException ex)
             {
                 var errorResponse = _mapper.Map<ErrorResponse>(ex);
                 return StatusCode(errorResponse.StatusCode, errorResponse);
@@ -48,7 +48,7 @@ namespace BackEnd.Controllers
 
                 return Ok(new { Status = 200, Message = "Delete User successfully" });
             }
-            catch(Exception ex)
+            catch(BadHttpRequestException ex)
             {
                 var errorResponse = _mapper.Map<ErrorResponse>(ex);
                 return StatusCode(errorResponse.StatusCode, errorResponse);
@@ -73,7 +73,7 @@ namespace BackEnd.Controllers
 
                 return Ok(apiResponse);
             }
-            catch(Exception ex)
+            catch(BadHttpRequestException ex)
             {
                 var errorResponse = _mapper.Map<ErrorResponse>(ex);
                 return StatusCode(errorResponse.StatusCode, errorResponse);
@@ -94,7 +94,6 @@ namespace BackEnd.Controllers
                     Role = Request.Query["role"]
                 };
 
-                // Parse createdAtRange from query string
                 if (!string.IsNullOrWhiteSpace(Request.Query["createdAtRange"]))
                 {
                     var dates = Request.Query["createdAtRange"].ToString().Split(',');
@@ -106,7 +105,6 @@ namespace BackEnd.Controllers
                     }
                 }
 
-                // Parse updatedAtRange from query string
                 if (!string.IsNullOrWhiteSpace(Request.Query["updatedAtRange"]))
                 {
                     var dates = Request.Query["updatedAtRange"].ToString().Split(',');
@@ -118,7 +116,6 @@ namespace BackEnd.Controllers
                     }
                 }
 
-                // Sorting parameters
                 if (bool.TryParse(Request.Query["sortByCreatedAt"], out var sortCreated))
                     filter.SortByCreatedAt = sortCreated;
 
@@ -134,7 +131,7 @@ namespace BackEnd.Controllers
                     Result = response
                 });
             }
-            catch (Exception ex)
+            catch (BadHttpRequestException ex)
             {
                 var errorResponse = _mapper.Map<ErrorResponse>(ex);
                 return StatusCode(errorResponse.StatusCode, errorResponse);

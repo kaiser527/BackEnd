@@ -13,6 +13,36 @@ namespace BackEnd.Infrastructure.Context
         {
             base.OnModelCreating(builder);
 
+            builder.Entity<ChatRoomUser>()
+                .HasKey(x => new { x.ChatRoomId, x.UserId });
+
+            builder.Entity<Message>()
+                .HasIndex(m => new { m.ChatRoomId, m.CreatedAt });
+
+            builder.Entity<ChatRoomUser>()
+                .HasOne(x => x.ChatRoom)
+                .WithMany(r => r.ChatRoomUsers)
+                .HasForeignKey(x => x.ChatRoomId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<ChatRoomUser>()
+                .HasOne(x => x.User)
+                .WithMany(u => u.ChatRoomUsers)
+                .HasForeignKey(x => x.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<Message>()
+                .HasOne(m => m.User)
+                .WithMany(u => u.Messages)
+                .HasForeignKey(m => m.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Entity<Message>()
+                .HasOne(m => m.ChatRoom)
+                .WithMany(r => r.Messages)
+                .HasForeignKey(m => m.ChatRoomId)
+                .OnDelete(DeleteBehavior.Cascade);
+
             builder.Entity<BlacklistToken>(entity =>
             {
                 entity.HasKey(e => e.Id);
@@ -23,7 +53,6 @@ namespace BackEnd.Infrastructure.Context
                 entity.Property(e => e.ExpiryTime)
                       .IsRequired();
 
-                // Create index on JTI for fast blacklist check
                 entity.HasIndex(e => e.Jti)
                       .IsUnique();
             });

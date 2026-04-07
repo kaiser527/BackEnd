@@ -32,7 +32,7 @@ namespace BackEnd.Controllers
 
                 return Ok(apiResponse);
             }
-            catch (Exception ex)
+            catch (BadHttpRequestException ex)
             {
                 var errorResponse = _mapper.Map<ErrorResponse>(ex);
                 return StatusCode(errorResponse.StatusCode, errorResponse);
@@ -58,7 +58,7 @@ namespace BackEnd.Controllers
 
                 return Ok(apiResponse);
             }
-            catch(Exception ex)
+            catch(UnauthorizedAccessException ex)
             {
                 var errorResponse = _mapper.Map<ErrorResponse>(ex);
                 return StatusCode(errorResponse.StatusCode, errorResponse);
@@ -83,7 +83,7 @@ namespace BackEnd.Controllers
 
                 return Ok(apiResponse);
             }
-            catch(Exception ex)
+            catch(UnauthorizedAccessException ex)
             {
                 var errorResponse = _mapper.Map<ErrorResponse>(ex);
                 return StatusCode(errorResponse.StatusCode, errorResponse);
@@ -109,7 +109,7 @@ namespace BackEnd.Controllers
                     ? Ok(apiResponse)
                     : BadRequest(apiResponse);
             }
-            catch (Exception ex)
+            catch (BadHttpRequestException ex)
             {
                 var errorResponse = _mapper.Map<ErrorResponse>(ex);
                 return StatusCode(errorResponse.StatusCode, errorResponse);
@@ -133,7 +133,7 @@ namespace BackEnd.Controllers
 
                 return Ok(apiResponse);
             }
-            catch (Exception ex)
+            catch (BadHttpRequestException ex)
             {
                 var errorResponse = _mapper.Map<ErrorResponse>(ex);
                 return StatusCode(errorResponse.StatusCode, errorResponse);

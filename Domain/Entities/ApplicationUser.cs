@@ -11,5 +11,9 @@ namespace BackEnd.Domain.Entities
         public DateTime? RefreshTokenExpiryTime { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
+        public DateTime LastActive { get; set; }
+        public string FullName => $"{FirstName} {LastName}";
+        public ICollection<Message> Messages { get; set; } = [];
+        public ICollection<ChatRoomUser> ChatRoomUsers { get; set; } = [];
     }
 }

@@ -414,7 +414,7 @@ namespace BackEnd.Service.Implementations
                     await _userManager.RemoveFromRolesAsync(user, currentRoles);
 
                 await _userManager.AddToRoleAsync(user, request.Role);
-                currentRole = request.Role; // Update the role after changes
+                currentRole = request.Role; 
             }
 
             var response = _mapper.Map<UserResponse>(user);
