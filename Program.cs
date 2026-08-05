@@ -1,11 +1,8 @@
-using BackEnd.Domain.Contracts;
-using BackEnd.Domain.Entities;
-using BackEnd.Domain.Interfaces;
-using BackEnd.Extensions;
-using BackEnd.Infrastructure.Context;
-using BackEnd.Infrastructure.Mapping;
-using BackEnd.Service.Implementations;
-using BackEnd.Service.Interfaces;
+using BackEnd.Modules.Auth;
+using BackEnd.Modules.Database;
+using BackEnd.Modules.User;
+using BackEnd.Modules.User.Entities;
+using BackEnd.Utils.Core;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
@@ -63,14 +60,15 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 });
 
 // Adding Services  
-builder.Services.AddScoped<IUserService, UserServiceImpl>();
-builder.Services.AddScoped<ITokenService, TokenServiceImpl>();
-builder.Services.AddScoped<ICurrentUserService, CurrentUserServiceImpl>();
+builder.Services.AddScoped<UserService>();
+builder.Services.AddScoped<TokenService>();
+builder.Services.AddScoped<AuthService>();
 
+// Background Services
+builder.Services.AddHostedService<BlacklistCleanupService>();
 
 // Regsitering AutoMapper
 builder.Services.AddAutoMapper(typeof(MappingProfile).Assembly);
-
 
 //Adding Jwt from extension method
 builder.Services.ConfigureIdentity();
@@ -87,7 +85,6 @@ using (var scope = app.Services.CreateScope())
     var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
 
     await SeedRoles.Initialize(roleManager);
-
     await SeedUsers.Initialize(userManager);
 }
 
