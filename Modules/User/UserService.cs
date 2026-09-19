@@ -1,5 +1,4 @@
 ﻿using AutoMapper;
-
 using BackEnd.Modules.Database;
 using BackEnd.Modules.User.Dto;
 using BackEnd.Modules.User.Entities;
@@ -14,7 +13,7 @@ namespace BackEnd.Modules.User
         RoleManager<IdentityRole> roleManager,
         IMapper mapper,
         ILogger<UserService> logger,
-        ApplicationDbContext context          
+        ApplicationDbContext context
     )
     {
         private readonly UserManager<ApplicationUser> _userManager = userManager;
@@ -43,13 +42,13 @@ namespace BackEnd.Modules.User
             if (userWithRoles == null)
             {
                 _logger.LogError("User not found");
-                throw new Exception("User not found");
+                throw new BadHttpRequestException("User not found");
             }
 
-            if(userWithRoles.Roles.Any(r => r == "Admin"))
+            if (userWithRoles.Roles.Any(r => r == "Admin"))
             {
                 _logger.LogError("Cannot delete Admin User");
-                throw new Exception("Cannot delete Admin User");
+                throw new BadHttpRequestException("Cannot delete Admin User");
             }
 
             await _userManager.DeleteAsync(userWithRoles.User);
@@ -77,7 +76,7 @@ namespace BackEnd.Modules.User
             if (userWithRoles == null)
             {
                 _logger.LogError("User not found");
-                throw new Exception("User not found");
+                throw new BadHttpRequestException("User not found");
             }
 
             var userResponse = _mapper.Map<UserResponse>(userWithRoles.User);
@@ -107,7 +106,7 @@ namespace BackEnd.Modules.User
             if (userWithRoles == null)
             {
                 _logger.LogError("User not found");
-                throw new Exception("User not found");
+                throw new BadHttpRequestException("User not found");
             }
 
             var user = userWithRoles.User;
@@ -119,18 +118,18 @@ namespace BackEnd.Modules.User
             user.LastName = request.LastName;
             user.Gender = request.Gender;
 
-            await _userManager.UpdateAsync(user); 
+            await _userManager.UpdateAsync(user);
 
             if (!string.IsNullOrWhiteSpace(request.Role) && !string.Equals(currentRole, request.Role, StringComparison.OrdinalIgnoreCase))
             {
                 if (!await _roleManager.RoleExistsAsync(request.Role))
-                    throw new Exception($"Role '{request.Role}' does not exist.");
+                    throw new BadHttpRequestException($"Role '{request.Role}' does not exist.");
 
                 if (currentRoles.Count != 0)
                     await _userManager.RemoveFromRolesAsync(user, currentRoles);
 
                 await _userManager.AddToRoleAsync(user, request.Role);
-                currentRole = request.Role; 
+                currentRole = request.Role;
             }
 
             var response = _mapper.Map<UserResponse>(user);
@@ -175,21 +174,21 @@ namespace BackEnd.Modules.User
             // Filter by role name
             if (!string.IsNullOrWhiteSpace(request.Role))
             {
+                var roles = request.Role
+                    .Split(',', StringSplitOptions.RemoveEmptyEntries)
+                    .Select(x => x.Trim())
+                    .ToList();
+
                 query = query
-                    .Join(
-                        _context.UserRoles,
-                        u => u.Id,
-                        ur => ur.UserId,
-                        (u, ur) => new { User = u, UserRole = ur }
-                    )
-                    .Join(
-                        _context.Roles,
-                        uu => uu.UserRole.RoleId,
-                        r => r.Id,
-                        (uu, r) => new { uu.User, RoleName = r.Name }
-                    )
-                    .Where(x => x.RoleName == request.Role)
-                    .Select(x => x.User);
+                    .Where(u => _context.UserRoles
+                        .Where(ur => ur.UserId == u.Id)
+                        .Join(
+                            _context.Roles,
+                            ur => ur.RoleId,
+                            r => r.Id,
+                            (ur, r) => r.Name
+                        )
+                        .Any(roleName => roles.Contains(roleName ?? "")));
             }
 
             // Sorting
@@ -232,9 +231,9 @@ namespace BackEnd.Modules.User
 
             var meta = new Meta
             {
-               PageSize = pageSize,
-               PageNumber = pageNumber,
-               TotalPages = totalPages,
+                PageSize = pageSize,
+                PageNumber = pageNumber,
+                TotalPages = totalPages,
             };
 
             return new PaginateReponse<UserResponse>
@@ -242,6 +241,14 @@ namespace BackEnd.Modules.User
                 Meta = meta,
                 Data = userResponses
             };
+        }
+
+        public Task<string[]> GetUserImages()
+        {
+            return _context.Users
+                .Where(u => !string.IsNullOrEmpty(u.Image))
+                .Select(u => u.Image)
+                .ToArrayAsync();
         }
     }
 }

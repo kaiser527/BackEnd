@@ -1,11 +1,16 @@
 using BackEnd.Modules.Auth;
 using BackEnd.Modules.Database;
+using BackEnd.Modules.File;
+using BackEnd.Modules.History;
+using BackEnd.Modules.QuizApp;
+using BackEnd.Modules.QuizContent;
 using BackEnd.Modules.User;
 using BackEnd.Modules.User.Entities;
 using BackEnd.Utils.Core;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,7 +20,6 @@ builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddProblemDetails();
 
-builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 
@@ -63,9 +67,14 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<TokenService>();
 builder.Services.AddScoped<AuthService>();
+builder.Services.AddScoped<FileService>();
+builder.Services.AddScoped<QuizService>();
+builder.Services.AddScoped<QuizContentService>();
+builder.Services.AddScoped<HistoryService>();
 
 // Background Services
 builder.Services.AddHostedService<BlacklistCleanupService>();
+builder.Services.AddHostedService<FileCleanupService>();
 
 // Regsitering AutoMapper
 builder.Services.AddAutoMapper(typeof(MappingProfile).Assembly);
@@ -74,6 +83,11 @@ builder.Services.AddAutoMapper(typeof(MappingProfile).Assembly);
 builder.Services.ConfigureIdentity();
 builder.Services.ConfigureJwt(builder.Configuration);
 builder.Services.ConfigureCors();
+
+builder.Services.AddControllers().AddJsonOptions(options => 
+{
+    options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+});
 
 var app = builder.Build();
 
@@ -88,7 +102,10 @@ using (var scope = app.Services.CreateScope())
     await SeedUsers.Initialize(userManager);
 }
 
-app.UseHttpsRedirection();
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
 
 app.UseCors("CorsPolicy");
 
@@ -98,6 +115,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+app.UseStaticFiles();
 
 app.UseAuthentication();
 app.UseAuthorization();

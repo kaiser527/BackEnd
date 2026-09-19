@@ -8,7 +8,7 @@ namespace BackEnd.Modules.Database
         public static async Task Initialize(RoleManager<IdentityRole> roleManager)
         {
             string[] roleNames = ["Admin", "User", "Staff"];
-
+ 
             foreach (var roleName in roleNames)
             {
                 var roleExist = await roleManager.RoleExistsAsync(roleName);
@@ -37,6 +37,7 @@ namespace BackEnd.Modules.Database
                     FirstName = "Admin",
                     LastName = "User",
                     Gender = "Other",
+                    Image = "admin.png",
                     CreatedAt = DateTime.UtcNow,
                     UpdatedAt = DateTime.UtcNow
                 };
@@ -61,6 +62,7 @@ namespace BackEnd.Modules.Database
                     FirstName = "Normal",
                     LastName = "User",
                     Gender = "Other",
+                    Image = "user.png",
                     CreatedAt = DateTime.UtcNow,
                     UpdatedAt = DateTime.UtcNow
                 };
@@ -85,6 +87,7 @@ namespace BackEnd.Modules.Database
                     FirstName = "Staff",
                     LastName = "User",
                     Gender = "Other",
+                    Image = "admin.png",
                     CreatedAt = DateTime.UtcNow,
                     UpdatedAt = DateTime.UtcNow
                 };

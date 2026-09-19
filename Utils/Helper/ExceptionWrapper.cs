@@ -6,9 +6,7 @@ namespace BackEnd.Utils.Helper
 {
     public static class ExceptionWrapper
     {
-        public static async Task<IActionResult> Execute(
-            Func<Task<IActionResult>> action,
-            IMapper mapper)
+        public static async Task<IActionResult> Execute(Func<Task<IActionResult>> action, IMapper mapper)
         {
             try
             {

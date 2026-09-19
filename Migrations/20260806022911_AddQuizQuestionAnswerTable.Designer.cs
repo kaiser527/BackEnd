@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BackEnd.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260805013009_InitDatabase")]
-    partial class InitDatabase
+    [Migration("20260806022911_AddQuizQuestionAnswerTable")]
+    partial class AddQuizQuestionAnswerTable
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -48,6 +48,202 @@ namespace BackEnd.Migrations
                     b.ToTable("BlacklistTokens");
                 });
 
+            modelBuilder.Entity("BackEnd.Modules.History.Entities.QuizHistory", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("QuizId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<double>("Score")
+                        .HasColumnType("float");
+
+                    b.Property<DateTime>("StartedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("SubmittedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("QuizId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("QuizHistories");
+                });
+
+            modelBuilder.Entity("BackEnd.Modules.History.Entities.UserAnswer", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("EssayAnswer")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool?>("IsCorrect")
+                        .HasColumnType("bit");
+
+                    b.Property<Guid>("QuestionId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("QuizHistoryId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("SelectedAnswerId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("QuestionId");
+
+                    b.HasIndex("QuizHistoryId");
+
+                    b.HasIndex("SelectedAnswerId");
+
+                    b.ToTable("UserAnswers");
+                });
+
+            modelBuilder.Entity("BackEnd.Modules.QuizApp.Entities.Quiz", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Difficulty")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Image")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("TimeSeconds")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Quizzes");
+                });
+
+            modelBuilder.Entity("BackEnd.Modules.QuizContent.Entities.Answer", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsCorrect")
+                        .HasColumnType("bit");
+
+                    b.Property<Guid>("QuestionId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Text")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("QuestionId");
+
+                    b.ToTable("Answers");
+                });
+
+            modelBuilder.Entity("BackEnd.Modules.QuizContent.Entities.Content", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("AudioUrl")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Image")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Instruction")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Passage")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("QuizId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("QuizId");
+
+                    b.ToTable("Contents");
+                });
+
+            modelBuilder.Entity("BackEnd.Modules.QuizContent.Entities.Question", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("ContentId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Text")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ContentId");
+
+                    b.ToTable("Questions");
+                });
+
             modelBuilder.Entity("BackEnd.Modules.User.Entities.ApplicationUser", b =>
                 {
                     b.Property<string>("Id")
@@ -75,6 +271,10 @@ namespace BackEnd.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Gender")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Image")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
@@ -270,6 +470,84 @@ namespace BackEnd.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("BackEnd.Modules.History.Entities.QuizHistory", b =>
+                {
+                    b.HasOne("BackEnd.Modules.QuizApp.Entities.Quiz", "Quiz")
+                        .WithMany("QuizHistories")
+                        .HasForeignKey("QuizId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("BackEnd.Modules.User.Entities.ApplicationUser", "User")
+                        .WithMany("QuizHistories")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Quiz");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("BackEnd.Modules.History.Entities.UserAnswer", b =>
+                {
+                    b.HasOne("BackEnd.Modules.QuizContent.Entities.Question", "Question")
+                        .WithMany("UserAnswers")
+                        .HasForeignKey("QuestionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("BackEnd.Modules.History.Entities.QuizHistory", "QuizHistory")
+                        .WithMany("UserAnswers")
+                        .HasForeignKey("QuizHistoryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("BackEnd.Modules.QuizContent.Entities.Answer", "SelectedAnswer")
+                        .WithMany("UserAnswers")
+                        .HasForeignKey("SelectedAnswerId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Question");
+
+                    b.Navigation("QuizHistory");
+
+                    b.Navigation("SelectedAnswer");
+                });
+
+            modelBuilder.Entity("BackEnd.Modules.QuizContent.Entities.Answer", b =>
+                {
+                    b.HasOne("BackEnd.Modules.QuizContent.Entities.Question", "Question")
+                        .WithMany("Answers")
+                        .HasForeignKey("QuestionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Question");
+                });
+
+            modelBuilder.Entity("BackEnd.Modules.QuizContent.Entities.Content", b =>
+                {
+                    b.HasOne("BackEnd.Modules.QuizApp.Entities.Quiz", "Quiz")
+                        .WithMany("Contents")
+                        .HasForeignKey("QuizId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Quiz");
+                });
+
+            modelBuilder.Entity("BackEnd.Modules.QuizContent.Entities.Question", b =>
+                {
+                    b.HasOne("BackEnd.Modules.QuizContent.Entities.Content", "Content")
+                        .WithMany("Questions")
+                        .HasForeignKey("ContentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Content");
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
@@ -319,6 +597,40 @@ namespace BackEnd.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("BackEnd.Modules.History.Entities.QuizHistory", b =>
+                {
+                    b.Navigation("UserAnswers");
+                });
+
+            modelBuilder.Entity("BackEnd.Modules.QuizApp.Entities.Quiz", b =>
+                {
+                    b.Navigation("Contents");
+
+                    b.Navigation("QuizHistories");
+                });
+
+            modelBuilder.Entity("BackEnd.Modules.QuizContent.Entities.Answer", b =>
+                {
+                    b.Navigation("UserAnswers");
+                });
+
+            modelBuilder.Entity("BackEnd.Modules.QuizContent.Entities.Content", b =>
+                {
+                    b.Navigation("Questions");
+                });
+
+            modelBuilder.Entity("BackEnd.Modules.QuizContent.Entities.Question", b =>
+                {
+                    b.Navigation("Answers");
+
+                    b.Navigation("UserAnswers");
+                });
+
+            modelBuilder.Entity("BackEnd.Modules.User.Entities.ApplicationUser", b =>
+                {
+                    b.Navigation("QuizHistories");
                 });
 #pragma warning restore 612, 618
         }

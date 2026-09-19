@@ -9,7 +9,7 @@ namespace BackEnd.Modules.User
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class UserController(UserService userService, IMapper mapper) : Controller
+    public class UserController(UserService userService, IMapper mapper) : ControllerBase
     {
         private readonly UserService _userService = userService;
         private readonly IMapper _mapper = mapper;

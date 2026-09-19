@@ -16,7 +16,6 @@ namespace BackEnd.Modules.Auth
         private readonly IMapper _mapper = mapper;
 
         [HttpPost("register")]
-        [AllowAnonymous]
         public async Task<IActionResult> Register([FromBody] UserRegisterRequest request)
         {
             return await ExceptionWrapper.Execute(async () =>
@@ -34,7 +33,6 @@ namespace BackEnd.Modules.Auth
         }
 
         [HttpPost("login")]
-        [AllowAnonymous]
         public async Task<IActionResult> Login([FromBody] UserLoginRequest request)
         {
             return await ExceptionWrapper.Execute(async () =>
@@ -52,7 +50,6 @@ namespace BackEnd.Modules.Auth
         }
 
         [HttpPost("refresh-token")]
-        [AllowAnonymous]
         public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequest request)
         {
            return await ExceptionWrapper.Execute(async () =>
@@ -100,6 +97,24 @@ namespace BackEnd.Modules.Auth
                     StatusCode = 200,
                     Message = "Get current user successfully",
                     Result = response
+                };
+                return Ok(apiResponse);
+            }, _mapper);
+        }
+
+        [HttpPatch("update-profile/{id}")]
+        [Authorize]
+        public async Task<IActionResult> UpdateUserProfile(string id, [FromBody] UpdateUserProfileRequest request)
+        {
+            return await ExceptionWrapper.Execute(async () =>
+            {
+                var user = await _authService.UpdateUserProfile(id, request);
+                var userResponse = _mapper.Map<UserResponse>(user);
+                var apiResponse = new ApiResponse<UserResponse>
+                {
+                    StatusCode = 200,
+                    Message = "Update user profile successfully",
+                    Result = userResponse
                 };
                 return Ok(apiResponse);
             }, _mapper);

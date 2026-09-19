@@ -6,6 +6,7 @@
         public required string LastName { get; set; }
         public required string Gender { get; set; }
         public required string Role { get; set; }
+        public required string Image { get; set; }
     }
 
     public class UserFilterRequest

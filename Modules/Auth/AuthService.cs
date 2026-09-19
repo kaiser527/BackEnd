@@ -17,7 +17,6 @@ namespace BackEnd.Modules.Auth
     public class AuthService(
         TokenService tokenService,
         UserManager<ApplicationUser> userManager,
-        RoleManager<IdentityRole> roleManager,
         IMapper mapper,
         ILogger<UserService> logger,
         ApplicationDbContext context,
@@ -28,7 +27,6 @@ namespace BackEnd.Modules.Auth
         private readonly ILogger<UserService> _logger = logger;
         private readonly ApplicationDbContext _context = context;
         private readonly UserManager<ApplicationUser> _userManager = userManager;
-        private readonly RoleManager<IdentityRole> _roleManager = roleManager;
         private readonly TokenService _tokenService = tokenService;
         private readonly IHttpContextAccessor _httpContextAccessor = httpContextAccessor;
 
@@ -63,32 +61,8 @@ namespace BackEnd.Modules.Auth
             }
 
             var user = userWithRoles.User;
-            var roles = userWithRoles.Roles;
 
-            // Generate tokens
-            var accessToken = await _tokenService.GenerateToken(user);
-            var refreshToken = _tokenService.GenerateRefreshToken();
-            var refreshTokenHash = SHA256.HashData(Encoding.UTF8.GetBytes(refreshToken));
-
-            user.RefreshToken = Convert.ToBase64String(refreshTokenHash);
-            user.RefreshTokenExpiryTime = DateTime.Now.AddDays(2);
-
-            // Update user with refresh token
-            var result = await _userManager.UpdateAsync(user);
-            if (!result.Succeeded)
-            {
-                var errors = string.Join(", ", result.Errors.Select(e => e.Description));
-                _logger.LogError("Failed to update user: {Errors}", errors);
-                throw new Exception($"Failed to update user: {errors}");
-            }
-
-            // Map to response
-            var userResponse = _mapper.Map<UserResponse>(user);
-            userResponse.Role = roles.FirstOrDefault() ?? "User";
-            userResponse.AccessToken = accessToken;
-            userResponse.RefreshToken = refreshToken;
-
-            return userResponse;
+            return await GenerateUserResponseAsync(user);
         }
 
         public async Task<CurrentUserResponse> RefreshTokenAsync(RefreshTokenRequest request)
@@ -167,7 +141,7 @@ namespace BackEnd.Modules.Auth
             if (userWithRoles == null)
             {
                 _logger.LogError("User not found");
-                throw new Exception("User not found");
+                throw new BadHttpRequestException("User not found");
             }
 
             var userResponse = _mapper.Map<CurrentUserResponse>(userWithRoles.User);
@@ -189,7 +163,7 @@ namespace BackEnd.Modules.Auth
             if (user == null)
             {
                 _logger.LogError("Invalid refresh token");
-                throw new Exception("Invalid refresh token");
+                throw new BadHttpRequestException("Invalid refresh token");
             }
 
             // Blacklist access token from header if available
@@ -224,7 +198,7 @@ namespace BackEnd.Modules.Auth
             if (user.RefreshTokenExpiryTime < DateTime.Now)
             {
                 _logger.LogWarning("Refresh token expired for user ID: {UserId}", user.Id);
-                throw new Exception("Refresh token expired");
+                throw new BadHttpRequestException("Refresh token expired");
             }
 
             // Remove refresh token
@@ -256,7 +230,7 @@ namespace BackEnd.Modules.Auth
             if (existingUser != null)
             {
                 _logger.LogError("Email is already exists");
-                throw new Exception("Email is already exists");
+                throw new BadHttpRequestException("Email is already exists");
             }
 
             var newUser = _mapper.Map<ApplicationUser>(request);
@@ -268,7 +242,7 @@ namespace BackEnd.Modules.Auth
             {
                 var errors = string.Join(", ", result.Errors.Select(e => e.Description));
                 _logger.LogError("Failed to create user: {errors}", errors);
-                throw new Exception($"Failed to create user: {errors}");
+                throw new BadHttpRequestException($"Failed to create user: {errors}");
             }
 
             _logger.LogInformation("User created successfully");
@@ -281,7 +255,7 @@ namespace BackEnd.Modules.Auth
             {
                 var errors = string.Join(", ", roleResult.Errors.Select(e => e.Description));
                 _logger.LogError("Failed to assign role: {errors}", errors);
-                throw new Exception($"Failed to assign role: {errors}");
+                throw new BadHttpRequestException($"Failed to assign role: {errors}");
             }
 
             _logger.LogInformation("Role assigned successfully");
@@ -292,6 +266,37 @@ namespace BackEnd.Modules.Auth
             userResponse.Role = roles.FirstOrDefault() ?? "User";
 
             return userResponse;
+        }
+
+        public async Task<UserResponse> UpdateUserProfile(string id, UpdateUserProfileRequest request)
+        {
+            var user = await _context.Users.FindAsync(id) 
+                ?? throw new BadHttpRequestException("User not exist");
+
+            bool isExist = await _context.Users
+                .AnyAsync(u => u.Email == request.Email && u.Id != id);
+
+            if (isExist)
+            {
+                throw new BadHttpRequestException("Email is already exist");
+            }
+
+            _mapper.Map(request, user);
+
+            if (!string.IsNullOrWhiteSpace(request.Password))
+            {
+                var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+                var result = await _userManager.ResetPasswordAsync(user, token, request.Password);
+
+                if (!result.Succeeded)
+                {
+                    throw new BadHttpRequestException(
+                        string.Join(", ", result.Errors.Select(e => e.Description))
+                    );
+                }
+            }
+
+            return await GenerateUserResponseAsync(user);
         }
 
         private string GenerateUserName(string firstName, string lastName)
@@ -307,6 +312,34 @@ namespace BackEnd.Modules.Auth
                 count++;
             }
             return username;
+        }
+
+        private async Task<UserResponse> GenerateUserResponseAsync(ApplicationUser user)
+        {
+            var roles = await _userManager.GetRolesAsync(user);
+
+            var accessToken = await _tokenService.GenerateToken(user);
+            var refreshToken = _tokenService.GenerateRefreshToken();
+            var refreshTokenHash = SHA256.HashData( Encoding.UTF8.GetBytes(refreshToken));
+
+            user.RefreshToken = Convert.ToBase64String(refreshTokenHash);
+            user.RefreshTokenExpiryTime = DateTime.Now.AddDays(2);
+
+            var result = await _userManager.UpdateAsync(user);
+
+            if (!result.Succeeded)
+            {
+                var errors = string.Join( ", ",result.Errors.Select(e => e.Description));
+                throw new BadHttpRequestException( $"Failed to update user: {errors}");
+            }
+
+            var userResponse = _mapper.Map<UserResponse>(user);
+
+            userResponse.Role = roles.FirstOrDefault() ?? "User";
+            userResponse.AccessToken = accessToken;
+            userResponse.RefreshToken = refreshToken;
+
+            return userResponse;
         }
     }
 }

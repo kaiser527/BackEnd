@@ -30,4 +30,11 @@
     <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="9.0.6" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Modules\History\Dto\" />
+    <Folder Include="Modules\QuizContent\Dto\" />
+    <Folder Include="wwwroot\uploads\audio\" />
+    <Folder Include="wwwroot\uploads\images\quiz\" />
+  </ItemGroup>
+
 </Project>

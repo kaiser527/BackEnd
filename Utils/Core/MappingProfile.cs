@@ -1,8 +1,11 @@
 ﻿using AutoMapper;
 using BackEnd.Modules.Auth.Dto;
+using BackEnd.Modules.QuizApp.Dto;
+using BackEnd.Modules.QuizApp.Entities;
 using BackEnd.Modules.User.Dto;
 using BackEnd.Modules.User.Entities;
 using BackEnd.Utils.Dto;
+using Microsoft.AspNetCore.Identity.Data;
 using System.Net;
 
 namespace BackEnd.Utils.Core
@@ -14,6 +17,13 @@ namespace BackEnd.Utils.Core
             CreateMap<ApplicationUser, UserResponse>();
             CreateMap<ApplicationUser, CurrentUserResponse>();
             CreateMap<UserRegisterRequest, ApplicationUser>();
+            CreateMap<UserLoginRequest, ApplicationUser>();
+            CreateMap<UpdateUserProfileRequest, ApplicationUser>()
+                .ForMember(dest => dest.PasswordHash, opt => opt.Ignore());
+            CreateMap<UpdateUserProfileRequest, UserLoginRequest>();
+
+            CreateMap<Quiz, QuizResponse>();
+            CreateMap<QuizRequest, Quiz>();
 
             CreateMap<Exception, ErrorResponse>()
             .ForMember(dest => dest.Title, opt => opt.MapFrom(src => src.GetType().Name))
