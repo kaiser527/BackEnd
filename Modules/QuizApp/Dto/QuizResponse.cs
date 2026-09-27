@@ -10,6 +10,7 @@ namespace BackEnd.Modules.QuizApp.Dto
         public required QuizType Type { get; set; }
         public required int TimeSeconds { get; set; }
         public required Difficulty Difficulty { get; set; }
+        public int QuestionCount { get; set; } = 0;
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
     }

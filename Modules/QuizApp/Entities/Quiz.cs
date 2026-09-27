@@ -1,5 +1,6 @@
 ﻿using BackEnd.Modules.History.Entities;
 using BackEnd.Modules.QuizContent.Entities;
+using BackEnd.Utils.Helper;
 
 namespace BackEnd.Modules.QuizApp.Entities
 {
@@ -8,6 +9,7 @@ namespace BackEnd.Modules.QuizApp.Entities
         Reading,
         Listening,
         Writing,
+        Grammar,
         Mixed,
     }
     public enum Difficulty
@@ -16,7 +18,7 @@ namespace BackEnd.Modules.QuizApp.Entities
         Medium,
         Hard,
     }
-    public class Quiz
+    public class Quiz : IAuditableEntity
     {
         public Guid Id { get; set; }
         public required string Title { get; set; }

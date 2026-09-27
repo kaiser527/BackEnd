@@ -21,12 +21,11 @@ namespace BackEnd.Modules.User
             return await ExceptionWrapper.Execute(async () =>
             {
                 var response = await _userService.GetByIdAsync(id);
-                var userResponse = _mapper.Map<UserResponse>(response);
                 var apiResponse = new ApiResponse<UserResponse>
                 {
                     StatusCode = 200,
                     Message = "Get user by Id successfully",
-                    Result = userResponse
+                    Result = response
                 };
                 return Ok(apiResponse);
             }, _mapper);
@@ -39,7 +38,7 @@ namespace BackEnd.Modules.User
            return await ExceptionWrapper.Execute(async () =>
            {
                await _userService.DeleteAsync(id);
-               return Ok(new { Status = 200, Message = "Delete User successfully" });
+               return Ok(new { Status = 201, Message = "Delete User successfully" });
            }, _mapper);
         }
 
@@ -50,12 +49,11 @@ namespace BackEnd.Modules.User
             return await ExceptionWrapper.Execute(async () =>
             {
                 var response = await _userService.UpdateAsync(id, request);
-                var userResponse = _mapper.Map<UserResponse>(response);
                 var apiResponse = new ApiResponse<UserResponse>
                 {
-                    StatusCode = 200,
+                    StatusCode = 201,
                     Message = "Update user successfully",
-                    Result = userResponse
+                    Result = response
                 };
                 return Ok(apiResponse);
             }, _mapper);
@@ -72,7 +70,8 @@ namespace BackEnd.Modules.User
                     Email = Request.Query["email"],
                     FirstName = Request.Query["firstName"],
                     LastName = Request.Query["lastName"],
-                    Role = Request.Query["role"]
+                    Role = Request.Query["role"],
+                    Gender = Request.Query["gender"]
                 };
                 QsDateFilter.NormalizeDateFilter(Request, filter);
                 var response = await _userService.FetchUserPaginate(filter, pageNumber, pageSize);

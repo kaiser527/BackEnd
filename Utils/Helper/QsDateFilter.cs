@@ -19,7 +19,7 @@ public static class QsDateFilter
                 DateTime.TryParse(dates[0], out var start) &&
                 DateTime.TryParse(dates[1], out var end))
             {
-                createdAtRange?.SetValue(filter, new[] { start, end });
+                createdAtRange?.SetValue(filter, new List<DateTime> { start, end });
             }
         }
 
@@ -31,7 +31,7 @@ public static class QsDateFilter
                 DateTime.TryParse(dates[0], out var start) &&
                 DateTime.TryParse(dates[1], out var end))
             {
-                updatedAtRange?.SetValue(filter, new[] { start, end });
+                updatedAtRange?.SetValue(filter, new List<DateTime> { start, end });
             }
         }
 

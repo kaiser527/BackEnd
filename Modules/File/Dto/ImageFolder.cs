@@ -4,7 +4,7 @@
     {
         User,
         Quiz,
-        Question,
+        Content,
     }
 
     public enum FileType

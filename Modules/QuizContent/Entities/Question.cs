@@ -1,4 +1,5 @@
 ﻿using BackEnd.Modules.History.Entities;
+using BackEnd.Utils.Helper;
 
 namespace BackEnd.Modules.QuizContent.Entities
 {
@@ -8,7 +9,7 @@ namespace BackEnd.Modules.QuizContent.Entities
         TrueFalse,
         Essay
     }
-    public class Question
+    public class Question : IAuditableEntity
     {
         public Guid Id { get; set; }
         public required string Text { get; set; }

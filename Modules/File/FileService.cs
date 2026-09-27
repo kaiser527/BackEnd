@@ -16,7 +16,7 @@ namespace BackEnd.Modules.File
         private readonly Dictionary<FileType, long> _maxFileSize = new()
         {
             { FileType.Image, 5 * 1024 * 1024 },
-            { FileType.Audio, 15 * 1024 * 1024 }
+            { FileType.Audio, 50 * 1024 * 1024 }
         };
 
         private readonly Dictionary<UploadFolder, HashSet<string>> _protectedFiles = new()
@@ -27,6 +27,13 @@ namespace BackEnd.Modules.File
                 {
                     "admin.png",
                     "user.png"
+                }
+            },
+            {
+                UploadFolder.Quiz,
+                new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+                {
+                    "empty.jpg"
                 }
             }
         };
@@ -41,10 +48,9 @@ namespace BackEnd.Modules.File
 
             Directory.CreateDirectory(folderPath);
 
-            var extension = Path.GetExtension(file.FileName);
+            var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
 
-            var fileName =
-                $"{Path.GetFileNameWithoutExtension(file.FileName)}-{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}{extension}";
+            var fileName = $"{Guid.NewGuid()}{extension}";
 
             var fullPath = Path.Combine(folderPath, fileName);
 

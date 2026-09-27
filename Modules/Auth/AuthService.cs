@@ -268,13 +268,14 @@ namespace BackEnd.Modules.Auth
             return userResponse;
         }
 
-        public async Task<UserResponse> UpdateUserProfile(string id, UpdateUserProfileRequest request)
+        public async Task<UserResponse> UpdateUserProfile(UpdateUserProfileRequest request)
         {
-            var user = await _context.Users.FindAsync(id) 
+            var userId = _httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            var user = await _context.Users.FindAsync(userId) 
                 ?? throw new BadHttpRequestException("User not exist");
 
-            bool isExist = await _context.Users
-                .AnyAsync(u => u.Email == request.Email && u.Id != id);
+            bool isExist = await _context.Users.AnyAsync(u => u.Email == request.Email && u.Id != userId);
 
             if (isExist)
             {

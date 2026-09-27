@@ -21,12 +21,11 @@ namespace BackEnd.Modules.QuizApp
             return await ExceptionWrapper.Execute(async () =>
             {
                 var quiz = await _quizService.CreateQuiz(request);
-                var quizResponse = _mapper.Map<QuizResponse>(quiz);
                 var apiResponse = new ApiResponse<QuizResponse>
                 {
                     StatusCode = 201,
                     Message = "Create quiz successfully",
-                    Result = quizResponse
+                    Result = quiz
                 };
                 return Ok(apiResponse);
             }, _mapper);
@@ -39,12 +38,11 @@ namespace BackEnd.Modules.QuizApp
             return await ExceptionWrapper.Execute(async () =>
             {
                 var quiz = await _quizService.UpdateQuiz(id, request);
-                var quizResponse = _mapper.Map<QuizResponse>(quiz);
                 var apiResponse = new ApiResponse<QuizResponse>
                 {
                     StatusCode = 201,
-                    Message = "Create quiz successfully",
-                    Result = quizResponse
+                    Message = "Update quiz successfully",
+                    Result = quiz
                 };
                 return Ok(apiResponse);
             }, _mapper);
@@ -57,7 +55,7 @@ namespace BackEnd.Modules.QuizApp
             return await ExceptionWrapper.Execute(async () =>
             {
                 await _quizService.DeleteQuiz(id);
-                return Ok(new { Status = 200, Message = "Delete Quiz successfully" });
+                return Ok(new { Status = 201, Message = "Delete Quiz successfully" });
             }, _mapper);
         }
 

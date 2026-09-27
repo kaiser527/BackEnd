@@ -3,13 +3,13 @@ using BackEnd.Modules.History.Entities;
 using BackEnd.Modules.QuizApp.Entities;
 using BackEnd.Modules.QuizContent.Entities;
 using BackEnd.Modules.User.Entities;
+using BackEnd.Utils.Helper;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace BackEnd.Modules.Database
 {
-    public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
-        : IdentityDbContext<ApplicationUser>(options)
+    public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : IdentityDbContext<ApplicationUser>(options)
     {
         public DbSet<BlacklistToken> BlacklistTokens => Set<BlacklistToken>();
         public DbSet<Quiz> Quizzes => Set<Quiz>();
@@ -18,6 +18,18 @@ namespace BackEnd.Modules.Database
         public DbSet<Answer> Answers => Set<Answer>();
         public DbSet<QuizHistory> QuizHistories => Set<QuizHistory>();
         public DbSet<UserAnswer> UserAnswers => Set<UserAnswer>();
+
+        public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+        {
+            AuditHelper.UpdateAuditFields(this);
+            return await base.SaveChangesAsync(cancellationToken);
+        }
+
+        public override int SaveChanges()
+        {
+            AuditHelper.UpdateAuditFields(this);
+            return base.SaveChanges();
+        }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {

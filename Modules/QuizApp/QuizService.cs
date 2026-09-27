@@ -88,18 +88,18 @@ namespace BackEnd.Modules.QuizApp
                 query = query.Where(q => difficulties.Contains(q.Difficulty));
             }
 
-            if (request.CreatedAtRange != null && request.CreatedAtRange.Count == 2)
+            if (request.CreatedAtRange is { Count: 2 })
             {
-                var start = request.CreatedAtRange[0];
-                var end = request.CreatedAtRange[1];
-                query = query.Where(u => u.CreatedAt >= start && u.CreatedAt <= end);
+                var start = request.CreatedAtRange[0].Date;
+                var end = request.CreatedAtRange[1].Date.AddDays(1);
+                query = query.Where(u => u.CreatedAt >= start && u.CreatedAt < end);
             }
 
-            if (request.UpdatedAtRange != null && request.UpdatedAtRange.Count == 2)
+            if (request.UpdatedAtRange is { Count: 2 })
             {
                 var start = request.UpdatedAtRange[0];
-                var end = request.UpdatedAtRange[1];
-                query = query.Where(u => u.UpdatedAt >= start && u.UpdatedAt <= end);
+                var end = request.UpdatedAtRange[1].Date.AddDays(1);
+                query = query.Where(u => u.UpdatedAt >= start && u.UpdatedAt < end);
             }
 
             if (request.SortByCreatedAt.HasValue)
@@ -115,22 +115,29 @@ namespace BackEnd.Modules.QuizApp
             var totalQuizzes = await query.CountAsync();
             var totalPages = (int)Math.Ceiling(totalQuizzes / (double)pageSize);
 
-            var quizzes = await query
+            var quizResponses = await query
                 .Skip((pageNumber - 1) * pageSize)
                 .Take(pageSize)
+                .Select(q => new QuizResponse
+                {
+                    Id = q.Id,
+                    Title = q.Title,
+                    Image = q.Image,
+                    Type = q.Type,
+                    TimeSeconds = q.TimeSeconds,
+                    Difficulty = q.Difficulty,
+                    QuestionCount = q.Contents.SelectMany(c => c.Questions).Count(),
+                    CreatedAt = q.CreatedAt,
+                    UpdatedAt = q.UpdatedAt
+                })
                 .ToListAsync();
-
-            var quizResponses = quizzes.Select(q =>
-            {
-                var response = _mapper.Map<QuizResponse>(q);
-                return response;
-            }).ToList();
 
             var meta = new Meta
             {
                 PageSize = pageSize,
                 PageNumber = pageNumber,
                 TotalPages = totalPages,
+                TotalCount = totalQuizzes,
             };
 
             return new PaginateReponse<QuizResponse>
@@ -138,6 +145,14 @@ namespace BackEnd.Modules.QuizApp
                 Meta = meta,
                 Data = quizResponses
             };
+        }
+
+        public Task<string[]> GetQuizImages()
+        {
+            return _context.Quizzes
+                .Where(q => !string.IsNullOrEmpty(q.Image))
+                .Select(q => q.Image)
+                .ToArrayAsync();
         }
     }
 }

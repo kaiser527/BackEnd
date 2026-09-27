@@ -1,8 +1,9 @@
 ﻿using BackEnd.Modules.History.Entities;
+using BackEnd.Utils.Helper;
 
 namespace BackEnd.Modules.QuizContent.Entities
 {
-    public class Answer
+    public class Answer : IAuditableEntity
     {
         public Guid Id { get; set; }
         public required string Text { get; set; }

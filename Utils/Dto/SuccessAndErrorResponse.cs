@@ -12,6 +12,7 @@
         public required int PageSize { get; set; }
         public required int PageNumber { get; set; }
         public required int TotalPages { get; set; }
+        public int? TotalCount { get; set; }
     }
 
     public class PaginateReponse<T>

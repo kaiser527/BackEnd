@@ -15,6 +15,7 @@
         public string? FirstName { get; set; }
         public string? LastName { get; set; }
         public string? Role { get; set; }
+        public string? Gender { get; set; }
         public bool? SortByCreatedAt { get; set; }
         public bool? SortByUpdatedAt { get; set; }
         public List<DateTime>? CreatedAtRange { get; set; }

@@ -1,9 +1,10 @@
 ﻿using BackEnd.Modules.History.Entities;
+using BackEnd.Utils.Helper;
 using Microsoft.AspNetCore.Identity;
 
 namespace BackEnd.Modules.User.Entities
 {
-    public class ApplicationUser : IdentityUser
+    public class ApplicationUser : IdentityUser, IAuditableEntity
     {  
         public required string FirstName { get; set; }
         public required string LastName { get; set; }

@@ -21,12 +21,11 @@ namespace BackEnd.Modules.Auth
             return await ExceptionWrapper.Execute(async () =>
             {
                 var user = await _authService.RegisterAsync(request);
-                var userResponse = _mapper.Map<UserResponse>(user);
                 var apiResponse = new ApiResponse<UserResponse>
                 {
                     StatusCode = 201,
                     Message = "User registered successfully",
-                    Result = userResponse
+                    Result = user
                 };
                 return Ok(apiResponse);
             }, _mapper);
@@ -38,12 +37,11 @@ namespace BackEnd.Modules.Auth
             return await ExceptionWrapper.Execute(async () =>
             {
                 var user = await _authService.LoginAsync(request);
-                var userResponse = _mapper.Map<UserResponse>(user);
                 var apiResponse = new ApiResponse<UserResponse>
                 {
-                    StatusCode = 200,
+                    StatusCode = 201,
                     Message = "User login successfully",
-                    Result = userResponse
+                    Result = user
                 };
                 return Ok(apiResponse);
             }, _mapper);
@@ -55,12 +53,11 @@ namespace BackEnd.Modules.Auth
            return await ExceptionWrapper.Execute(async () =>
            {
                 var currentUser = await _authService.RefreshTokenAsync(request);
-                var userResponse = _mapper.Map<CurrentUserResponse>(currentUser);
                 var apiResponse = new ApiResponse<CurrentUserResponse>
                 {
-                    StatusCode = 200,
+                    StatusCode = 201,
                     Message = "Refresh token successfully",
-                    Result = userResponse
+                    Result = currentUser
                 };
                 return Ok(apiResponse);
            }, _mapper);
@@ -75,7 +72,7 @@ namespace BackEnd.Modules.Auth
                 var response = await _authService.RevokeRefreshToken(request);
                 var apiResponse = new ApiResponse<RevokeRefreshTokenResponse>
                 {
-                    StatusCode = response.Message == "Refresh token revoked successfully" ? 200 : 400,
+                    StatusCode = response.Message == "Refresh token revoked successfully" ? 201 : 400,
                     Message = response.Message,
                     Result = response
                 };
@@ -102,19 +99,18 @@ namespace BackEnd.Modules.Auth
             }, _mapper);
         }
 
-        [HttpPatch("update-profile/{id}")]
+        [HttpPatch("update-profile")]
         [Authorize]
-        public async Task<IActionResult> UpdateUserProfile(string id, [FromBody] UpdateUserProfileRequest request)
+        public async Task<IActionResult> UpdateUserProfile([FromBody] UpdateUserProfileRequest request)
         {
             return await ExceptionWrapper.Execute(async () =>
             {
-                var user = await _authService.UpdateUserProfile(id, request);
-                var userResponse = _mapper.Map<UserResponse>(user);
+                var user = await _authService.UpdateUserProfile(request);
                 var apiResponse = new ApiResponse<UserResponse>
                 {
-                    StatusCode = 200,
+                    StatusCode = 201,
                     Message = "Update user profile successfully",
-                    Result = userResponse
+                    Result = user
                 };
                 return Ok(apiResponse);
             }, _mapper);

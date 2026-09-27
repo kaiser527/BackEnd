@@ -5,6 +5,7 @@ using BackEnd.Modules.User.Entities;
 using BackEnd.Utils.Dto;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace BackEnd.Modules.User
 {
@@ -13,7 +14,8 @@ namespace BackEnd.Modules.User
         RoleManager<IdentityRole> roleManager,
         IMapper mapper,
         ILogger<UserService> logger,
-        ApplicationDbContext context
+        ApplicationDbContext context,
+        IHttpContextAccessor httpContextAccessor
     )
     {
         private readonly UserManager<ApplicationUser> _userManager = userManager;
@@ -21,6 +23,7 @@ namespace BackEnd.Modules.User
         private readonly IMapper _mapper = mapper;
         private readonly ILogger<UserService> _logger = logger;
         private readonly ApplicationDbContext _context = context;
+        private readonly IHttpContextAccessor _httpContextAccessor = httpContextAccessor;
 
         public async Task DeleteAsync(Guid id)
         {
@@ -43,6 +46,14 @@ namespace BackEnd.Modules.User
             {
                 _logger.LogError("User not found");
                 throw new BadHttpRequestException("User not found");
+            }
+
+            var userId = _httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (userWithRoles.User.Id.Equals(userId))
+            {
+                _logger.LogError("You cannot delete your own account");
+                throw new BadHttpRequestException("You cannot delete your own account");
             }
 
             if (userWithRoles.Roles.Any(r => r == "Admin"))
@@ -81,6 +92,7 @@ namespace BackEnd.Modules.User
 
             var userResponse = _mapper.Map<UserResponse>(userWithRoles.User);
             userResponse.Role = userWithRoles.Roles.FirstOrDefault() ?? "User";
+            userResponse.RefreshToken = null;
 
             return userResponse;
         }
@@ -117,6 +129,7 @@ namespace BackEnd.Modules.User
             user.FirstName = request.FirstName;
             user.LastName = request.LastName;
             user.Gender = request.Gender;
+            user.Image = request.Image;
 
             await _userManager.UpdateAsync(user);
 
@@ -134,6 +147,7 @@ namespace BackEnd.Modules.User
 
             var response = _mapper.Map<UserResponse>(user);
             response.Role = currentRole ?? "User";
+            response.RefreshToken = null;
 
             return response;
         }
@@ -157,18 +171,28 @@ namespace BackEnd.Modules.User
             if (!string.IsNullOrWhiteSpace(request.LastName))
                 query = query.Where(u => u.LastName.Contains(request.LastName));
 
-            if (request.CreatedAtRange != null && request.CreatedAtRange.Count == 2)
+            if (!string.IsNullOrWhiteSpace(request.Gender))
             {
-                var start = request.CreatedAtRange[0];
-                var end = request.CreatedAtRange[1];
-                query = query.Where(u => u.CreatedAt >= start && u.CreatedAt <= end);
+                var types = request.Gender
+                    .Split(',', StringSplitOptions.RemoveEmptyEntries)
+                    .Select(x => x.Trim().ToLower())
+                    .ToList();
+
+                query = query.Where(u => types.Contains((u.Gender ?? "").ToLower()));
             }
 
-            if (request.UpdatedAtRange != null && request.UpdatedAtRange.Count == 2)
+            if (request.CreatedAtRange is { Count: 2 })
+            {
+                var start = request.CreatedAtRange[0].Date;
+                var end = request.CreatedAtRange[1].Date.AddDays(1);
+                query = query.Where(u => u.CreatedAt >= start && u.CreatedAt < end);
+            }
+
+            if (request.UpdatedAtRange is { Count: 2 })
             {
                 var start = request.UpdatedAtRange[0];
-                var end = request.UpdatedAtRange[1];
-                query = query.Where(u => u.UpdatedAt >= start && u.UpdatedAt <= end);
+                var end = request.UpdatedAtRange[1].Date.AddDays(1);
+                query = query.Where(u => u.UpdatedAt >= start && u.UpdatedAt < end);
             }
 
             // Filter by role name
@@ -226,6 +250,7 @@ namespace BackEnd.Modules.User
             {
                 var response = _mapper.Map<UserResponse>(u);
                 response.Role = userRoles.FirstOrDefault(ur => ur.UserId == u.Id)?.Name ?? "User";
+                response.RefreshToken = null;
                 return response;
             }).ToList();
 

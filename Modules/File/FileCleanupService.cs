@@ -1,4 +1,6 @@
 ﻿using BackEnd.Modules.File.Dto;
+using BackEnd.Modules.QuizApp;
+using BackEnd.Modules.QuizContent;
 using BackEnd.Modules.User;
 
 namespace BackEnd.Modules.File
@@ -18,17 +20,28 @@ namespace BackEnd.Modules.File
 
                 var fileService = scope.ServiceProvider.GetRequiredService<FileService>();
                 var userService = scope.ServiceProvider.GetRequiredService<UserService>();
+                var quizService = scope.ServiceProvider.GetRequiredService<QuizService>();
+                var quizContentService = scope.ServiceProvider.GetRequiredService<QuizContentService>();
 
                 await fileService.CleanupUnusedFilesAsync(
                     FileType.Image,
                     UploadFolder.User,
                     await userService.GetUserImages());
 
-                // Later
-                // await fileService.CleanupUnusedFilesAsync(
-                //     FileType.Audio,
-                //     UploadFolder.Question,
-                //     await questionService.GetQuestionAudios());
+                await fileService.CleanupUnusedFilesAsync(
+                    FileType.Image,
+                    UploadFolder.Quiz,
+                    await quizService.GetQuizImages());
+
+                await fileService.CleanupUnusedFilesAsync(
+                    FileType.Image,
+                    UploadFolder.Content,
+                    await quizContentService.GetQuizContentImages());
+
+                await fileService.CleanupUnusedFilesAsync(
+                    FileType.Audio,
+                    UploadFolder.Content,
+                    await quizContentService.GetQuizContentAudios());
 
                 _logger.LogInformation("Unused files cleaned.");
 

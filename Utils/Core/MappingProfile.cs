@@ -1,11 +1,14 @@
 ﻿using AutoMapper;
 using BackEnd.Modules.Auth.Dto;
+using BackEnd.Modules.History.Dto;
+using BackEnd.Modules.History.Entities;
 using BackEnd.Modules.QuizApp.Dto;
 using BackEnd.Modules.QuizApp.Entities;
+using BackEnd.Modules.QuizContent.Dto;
+using BackEnd.Modules.QuizContent.Entities;
 using BackEnd.Modules.User.Dto;
 using BackEnd.Modules.User.Entities;
 using BackEnd.Utils.Dto;
-using Microsoft.AspNetCore.Identity.Data;
 using System.Net;
 
 namespace BackEnd.Utils.Core
@@ -24,6 +27,12 @@ namespace BackEnd.Utils.Core
 
             CreateMap<Quiz, QuizResponse>();
             CreateMap<QuizRequest, Quiz>();
+
+            CreateMap<Content, QuizContentResponse>();
+            CreateMap<Question, QuestionResponse>();
+            CreateMap<Answer, AnswerResponse>();
+
+            CreateMap<QuizHistory, QuizHistoryResponse>();
 
             CreateMap<Exception, ErrorResponse>()
             .ForMember(dest => dest.Title, opt => opt.MapFrom(src => src.GetType().Name))
