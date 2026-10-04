@@ -369,18 +369,7 @@ namespace BackEnd.Modules.History
                 .Where(h => h.IsComplete && h.Score == null)
                 .ToListAsync();
 
-            var responses = histories
-                .Select(h =>
-                {
-                    var response = _mapper.Map<QuizHistoryResponse>(h);
-                    response.EssayCount = h.Quiz.Contents
-                        .SelectMany(c => c.Questions)
-                        .Count(q => q.Type == QuestionType.Essay);
-                    return response;
-                })
-                .ToList();
-
-            return responses;
+            return _mapper.Map<IEnumerable<QuizHistoryResponse>>(histories);
         }
 
         public async Task<IEnumerable<UserAnswerResponse>> GetWaitingUserAnswers(Guid historyId)

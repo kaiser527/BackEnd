@@ -34,9 +34,12 @@ namespace BackEnd.Utils.Core
             CreateMap<Question, QuestionResponse>();
             CreateMap<Answer, AnswerResponse>();
 
-            CreateMap<QuizHistory, QuizHistoryResponse>();
             CreateMap<UserAnswer, UserAnswerResponse>();
             CreateMap<UserAnswerRequest, UserAnswer>();
+            CreateMap<QuizHistory, QuizHistoryResponse>()
+                .ForMember(dest => dest.EssayCount, opt => opt.MapFrom(src =>
+                        src.Quiz.Contents.SelectMany(c => c.Questions)
+                            .Count(q => q.Type == QuestionType.Essay)));
 
             CreateMap<Exception, ErrorResponse>()
             .ForMember(dest => dest.Title, opt => opt.MapFrom(src => src.GetType().Name))
