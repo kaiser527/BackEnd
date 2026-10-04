@@ -21,18 +21,22 @@ namespace BackEnd.Utils.Core
             CreateMap<ApplicationUser, CurrentUserResponse>();
             CreateMap<UserRegisterRequest, ApplicationUser>();
             CreateMap<UserLoginRequest, ApplicationUser>();
+            CreateMap<UpdateUserProfileRequest, UserLoginRequest>();
             CreateMap<UpdateUserProfileRequest, ApplicationUser>()
                 .ForMember(dest => dest.PasswordHash, opt => opt.Ignore());
-            CreateMap<UpdateUserProfileRequest, UserLoginRequest>();
 
-            CreateMap<Quiz, QuizResponse>();
             CreateMap<QuizRequest, Quiz>();
+            CreateMap<Quiz, QuizResponse>()
+                .ForMember(dest => dest.QuestionCount, opt => opt.MapFrom(src =>
+                    src.Contents.SelectMany(c => c.Questions).Count()));
 
             CreateMap<Content, QuizContentResponse>();
             CreateMap<Question, QuestionResponse>();
             CreateMap<Answer, AnswerResponse>();
 
             CreateMap<QuizHistory, QuizHistoryResponse>();
+            CreateMap<UserAnswer, UserAnswerResponse>();
+            CreateMap<UserAnswerRequest, UserAnswer>();
 
             CreateMap<Exception, ErrorResponse>()
             .ForMember(dest => dest.Title, opt => opt.MapFrom(src => src.GetType().Name))

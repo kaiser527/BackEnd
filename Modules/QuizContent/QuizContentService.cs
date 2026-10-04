@@ -37,7 +37,7 @@ namespace BackEnd.Modules.QuizContent
 
                 if (!quizExists)
                 {
-                    throw new KeyNotFoundException("Quiz not found.");
+                    throw new BadHttpRequestException("Quiz not found.");
                 }
 
                 var existingContents = await _context.Contents
@@ -45,6 +45,17 @@ namespace BackEnd.Modules.QuizContent
                     .Include(c => c.Questions)
                         .ThenInclude(q => q.Answers)
                     .ToListAsync();
+
+                var contentChanged = HasQuizContentChanged(existingContents, request.Contents);
+
+                if (contentChanged)
+                {
+                    var histories = await _context.QuizHistories
+                        .Where(h => h.QuizId == request.QuizId)
+                        .ToListAsync();
+
+                    _context.QuizHistories.RemoveRange(histories);
+                }
 
                 var requestContentIds = request.Contents
                     .Where(c => c.Id != Guid.Empty)
@@ -379,6 +390,75 @@ namespace BackEnd.Modules.QuizContent
                     );
                 }
             }
+        }
+
+        private static bool HasQuizContentChanged(List<Content> existingContents, IEnumerable<ContentRequest> requestContents)
+        {
+            var requestedContents = requestContents.ToList();
+
+            if (existingContents.Count != requestedContents.Count)
+                return true;
+
+            foreach (var existingContent in existingContents)
+            {
+                var requestContent = requestedContents
+                    .FirstOrDefault(c => c.Id == existingContent.Id);
+
+                if (requestContent == null)
+                    return true;
+
+                if (existingContent.Instruction != requestContent.Instruction ||
+                    existingContent.Passage != requestContent.Passage ||
+                    existingContent.AudioUrl != requestContent.AudioUrl ||
+                    existingContent.Image != requestContent.Image)
+                {
+                    return true;
+                }
+
+                var existingQuestions = existingContent.Questions.ToList();
+                var requestedQuestions = requestContent.Questions.ToList();
+
+                if (existingQuestions.Count != requestedQuestions.Count)
+                    return true;
+
+                foreach (var existingQuestion in existingQuestions)
+                {
+                    var requestQuestion = requestedQuestions
+                        .FirstOrDefault(q => q.Id == existingQuestion.Id);
+
+                    if (requestQuestion == null)
+                        return true;
+
+                    if (existingQuestion.Text != requestQuestion.Text ||
+                        existingQuestion.Type != requestQuestion.Type)
+                    {
+                        return true;
+                    }
+
+                    var existingAnswers = existingQuestion.Answers.ToList();
+                    var requestedAnswers = requestQuestion.Answers.ToList();
+
+                    if (existingAnswers.Count != requestedAnswers.Count)
+                        return true;
+
+                    foreach (var existingAnswer in existingAnswers)
+                    {
+                        var requestAnswer = requestedAnswers
+                            .FirstOrDefault(a => a.Id == existingAnswer.Id);
+
+                        if (requestAnswer == null)
+                            return true;
+
+                        if (existingAnswer.Text != requestAnswer.Text ||
+                            existingAnswer.IsCorrect != requestAnswer.IsCorrect)
+                        {
+                            return true;
+                        }
+                    }
+                }
+            }
+
+            return false;
         }
     }
 }

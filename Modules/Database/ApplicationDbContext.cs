@@ -89,7 +89,15 @@ namespace BackEnd.Modules.Database
             // QuizHistory
             builder.Entity<QuizHistory>(entity =>
             {
+                entity.Property(x => x.StartedAt)
+                    .HasColumnType("datetimeoffset");
+                entity.Property(x => x.ExpiresAt)
+                    .HasColumnType("datetimeoffset");
+                entity.Property(x => x.SubmittedAt)
+                    .HasColumnType("datetimeoffset");
                 entity.HasKey(x => x.Id);
+                entity.Property(x => x.IsComplete)
+                    .HasDefaultValue(false);
                 entity.HasOne(x => x.User)
                     .WithMany(x => x.QuizHistories)
                     .HasForeignKey(x => x.UserId)
@@ -107,6 +115,8 @@ namespace BackEnd.Modules.Database
             // UserAnswer
             builder.Entity<UserAnswer>(entity =>
             {
+                entity.HasIndex(x => new { x.QuizHistoryId, x.QuestionId })
+                    .IsUnique();
                 entity.HasKey(e => e.Id);
                 entity.HasOne(e => e.QuizHistory)
                     .WithMany(q => q.UserAnswers)

@@ -10,9 +10,11 @@ namespace BackEnd.Modules.History.Entities
         public ApplicationUser User { get; set; } = default!;
         public Guid QuizId { get; set; }
         public Quiz Quiz { get; set; } = default!;
-        public DateTime StartedAt { get; set; }
-        public DateTime SubmittedAt { get; set; }
-        public double Score { get; set; }
+        public DateTimeOffset StartedAt { get; set; }
+        public DateTimeOffset ExpiresAt { get; set; }
+        public DateTimeOffset? SubmittedAt { get; set; }
+        public bool IsComplete { get; set; } = false;
+        public double? Score { get; set; }
         public ICollection<UserAnswer> UserAnswers { get; set; } = [];
     }
 }

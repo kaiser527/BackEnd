@@ -115,22 +115,14 @@ namespace BackEnd.Modules.QuizApp
             var totalQuizzes = await query.CountAsync();
             var totalPages = (int)Math.Ceiling(totalQuizzes / (double)pageSize);
 
-            var quizResponses = await query
+            var quizzes = await query
+                .Include(q => q.Contents)
+                    .ThenInclude(c => c.Questions)
                 .Skip((pageNumber - 1) * pageSize)
                 .Take(pageSize)
-                .Select(q => new QuizResponse
-                {
-                    Id = q.Id,
-                    Title = q.Title,
-                    Image = q.Image,
-                    Type = q.Type,
-                    TimeSeconds = q.TimeSeconds,
-                    Difficulty = q.Difficulty,
-                    QuestionCount = q.Contents.SelectMany(c => c.Questions).Count(),
-                    CreatedAt = q.CreatedAt,
-                    UpdatedAt = q.UpdatedAt
-                })
                 .ToListAsync();
+
+            var quizResponses = _mapper.Map<List<QuizResponse>>(quizzes);
 
             var meta = new Meta
             {
