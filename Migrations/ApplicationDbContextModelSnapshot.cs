@@ -123,6 +123,80 @@ namespace BackEnd.Migrations
                     b.ToTable("UserAnswers");
                 });
 
+            modelBuilder.Entity("BackEnd.Modules.Message.Entities.Conversation", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset?>("ClosedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateTimeOffset>("LastMessageAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("StaffId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LastMessageAt");
+
+                    b.HasIndex("StaffId");
+
+                    b.HasIndex("UserId")
+                        .IsUnique()
+                        .HasDatabaseName("IX_Conversations_UserId_Open")
+                        .HasFilter("[Status] = 'Open'");
+
+                    b.HasIndex("UserId", "Status");
+
+                    b.ToTable("Conversations");
+                });
+
+            modelBuilder.Entity("BackEnd.Modules.Message.Entities.UserMessage", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("ConversationId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateTimeOffset?>("ReadAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("SenderId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SenderId");
+
+                    b.HasIndex("ConversationId", "CreatedAt");
+
+                    b.ToTable("Messages");
+                });
+
             modelBuilder.Entity("BackEnd.Modules.QuizApp.Entities.Quiz", b =>
                 {
                     b.Property<Guid>("Id")
@@ -521,6 +595,43 @@ namespace BackEnd.Migrations
                     b.Navigation("SelectedAnswer");
                 });
 
+            modelBuilder.Entity("BackEnd.Modules.Message.Entities.Conversation", b =>
+                {
+                    b.HasOne("BackEnd.Modules.User.Entities.ApplicationUser", "Staff")
+                        .WithMany()
+                        .HasForeignKey("StaffId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.HasOne("BackEnd.Modules.User.Entities.ApplicationUser", "User")
+                        .WithMany("Conversations")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Staff");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("BackEnd.Modules.Message.Entities.UserMessage", b =>
+                {
+                    b.HasOne("BackEnd.Modules.Message.Entities.Conversation", "Conversation")
+                        .WithMany("Messages")
+                        .HasForeignKey("ConversationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("BackEnd.Modules.User.Entities.ApplicationUser", "Sender")
+                        .WithMany("Messages")
+                        .HasForeignKey("SenderId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("Conversation");
+
+                    b.Navigation("Sender");
+                });
+
             modelBuilder.Entity("BackEnd.Modules.QuizContent.Entities.Answer", b =>
                 {
                     b.HasOne("BackEnd.Modules.QuizContent.Entities.Question", "Question")
@@ -610,6 +721,11 @@ namespace BackEnd.Migrations
                     b.Navigation("UserAnswers");
                 });
 
+            modelBuilder.Entity("BackEnd.Modules.Message.Entities.Conversation", b =>
+                {
+                    b.Navigation("Messages");
+                });
+
             modelBuilder.Entity("BackEnd.Modules.QuizApp.Entities.Quiz", b =>
                 {
                     b.Navigation("Contents");
@@ -636,6 +752,10 @@ namespace BackEnd.Migrations
 
             modelBuilder.Entity("BackEnd.Modules.User.Entities.ApplicationUser", b =>
                 {
+                    b.Navigation("Conversations");
+
+                    b.Navigation("Messages");
+
                     b.Navigation("QuizHistories");
                 });
 #pragma warning restore 612, 618

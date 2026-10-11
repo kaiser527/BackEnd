@@ -21,6 +21,13 @@
         public required List<T> Data { get; set; }
     }
 
+    public class CursorPaginateResponse<T>
+    {
+        public required List<T> Data { get; set; }
+        public string? NextCursor { get; set; }
+        public required bool HasMore { get; set; }
+    }
+
     public class ErrorResponse
     {
         public required string Title { get; set; }

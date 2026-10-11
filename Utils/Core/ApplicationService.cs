@@ -11,7 +11,6 @@ namespace BackEnd.Utils.Core
 {
     public static partial class ApplicationService
     {
-        // Allow any origin, method, and header
         public static void ConfigureCors(this IServiceCollection services)
         {
             services.AddCors(options =>
@@ -47,7 +46,6 @@ namespace BackEnd.Utils.Core
             {
                 throw new InvalidOperationException("JWT secret key is not configured.");
             }
-
             var secretKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.Key));
             services.AddAuthentication(o =>
             {
@@ -67,10 +65,20 @@ namespace BackEnd.Utils.Core
                 };
                 o.Events = new JwtBearerEvents
                 {
+                    OnMessageReceived = context =>
+                    {
+                        var accessToken = context.Request.Query["access_token"];
+                        var path = context.HttpContext.Request.Path;
+                        if (!string.IsNullOrEmpty(accessToken) &&
+                            path.StartsWithSegments("/chathub"))
+                        {
+                            context.Token = accessToken;
+                        }
+                        return Task.CompletedTask;
+                    },
                     OnTokenValidated = async context =>
                     {
                         var dbContext = context.HttpContext.RequestServices.GetRequiredService<ApplicationDbContext>();
-
                         var jti = context.SecurityToken.Id;
                         var isExist = await dbContext.BlacklistTokens.AnyAsync(t => t.Jti == jti);
                         if (isExist)
@@ -93,7 +101,7 @@ namespace BackEnd.Utils.Core
                     },
                     OnForbidden = context =>
                     {
-                        context.Response.StatusCode = 402; 
+                        context.Response.StatusCode = 403; 
                         context.Response.ContentType = "application/json";
                         var errorResponse = new ErrorResponse
                         {

@@ -148,5 +148,21 @@ namespace BackEnd.Modules.History
                 });
             }, _mapper);
         }
+
+        [HttpGet("progress")]
+        [Authorize]
+        public async Task<IActionResult> GetProgress([FromQuery] int limit = 5)
+        {
+            return await ExceptionWrapper.Execute(async () =>
+            {
+                var response = await _historyService.GetProgress(limit);
+                return Ok(new ApiResponse<ProgressResponse>
+                {
+                    StatusCode = 200,
+                    Message = "Fetch user progress successfully",
+                    Result = response
+                });
+            }, _mapper);
+        }
     }
 }

@@ -2,6 +2,7 @@
 using BackEnd.Modules.Database;
 using BackEnd.Modules.History.Dto;
 using BackEnd.Modules.History.Entities;
+using BackEnd.Modules.QuizApp.Entities;
 using BackEnd.Modules.QuizContent.Entities;
 using BackEnd.Utils.Dto;
 using Microsoft.EntityFrameworkCore;
@@ -366,6 +367,7 @@ namespace BackEnd.Modules.History
                 .Include(h => h.Quiz)
                     .ThenInclude(q => q.Contents)
                         .ThenInclude(c => c.Questions)
+                .Include(h => h.User)
                 .Where(h => h.IsComplete && h.Score == null)
                 .ToListAsync();
 
@@ -380,11 +382,257 @@ namespace BackEnd.Modules.History
                 .FirstOrDefaultAsync(h => h.Id == historyId && h.IsComplete && h.Score == null)
                 ?? throw new BadHttpRequestException("Quiz history not found or not waiting for grading");
 
-            var waitingAnswers = history.UserAnswers
+            var essayAnswers = history.UserAnswers
                 .Where(a => a.Question.Type == QuestionType.Essay && a.IsCorrect == null)
                 .ToList();
 
-            return _mapper.Map<IEnumerable<UserAnswerResponse>>(waitingAnswers);
+            return _mapper.Map<IEnumerable<UserAnswerResponse>>(essayAnswers);
+        }
+
+        private async Task<LearningStreakResponse> GetLearningStreak(string userId)
+        {
+            var timeZone = TimeZoneInfo.FindSystemTimeZoneById(
+                OperatingSystem.IsWindows() ? "SE Asia Standard Time" : "Asia/Ho_Chi_Minh"
+            );
+
+            var submittedDates = await _context.QuizHistories
+                .Where(h => h.UserId == userId && h.IsComplete && h.SubmittedAt != null)
+                .Select(h => h.SubmittedAt!.Value)
+                .ToListAsync();
+
+            var dateSet = submittedDates
+                .Select(date => TimeZoneInfo.ConvertTime(date, timeZone).Date)
+                .ToHashSet();
+
+            var today = TimeZoneInfo
+                .ConvertTime(DateTimeOffset.UtcNow, timeZone)
+                .Date;
+
+            var currentStreak = 0;
+            var checkDate = today;
+
+            if (!dateSet.Contains(today))
+            {
+                checkDate = today.AddDays(-1);
+            }
+
+            while (dateSet.Contains(checkDate))
+            {
+                currentStreak++;
+                checkDate = checkDate.AddDays(-1);
+            }
+
+            var monday = today.AddDays(-(((int)today.DayOfWeek + 6) % 7));
+
+            var week = Enumerable
+                .Range(0, 7)
+                .Select(i =>
+                {
+                    var date = monday.AddDays(i);
+
+                    return new StreakDayResponse
+                    {
+                        Date = date,
+                        Completed = date <= today && dateSet.Contains(date)
+                    };
+                })
+                .ToList();
+
+            return new LearningStreakResponse
+            {
+                CurrentStreak = currentStreak,
+                Week = week
+            };
+        }
+
+        private async Task<IEnumerable<PerformancePointResponse>> GetPerformance(int limit, string userId)
+        {
+            var histories = await _context.QuizHistories
+                .Where(h =>
+                    h.UserId == userId &&
+                    h.IsComplete &&
+                    h.Score != null &&
+                    h.SubmittedAt != null)
+                .OrderByDescending(h => h.SubmittedAt)
+                .Take(limit)
+                .Select(h => new
+                {
+                    h.QuizId,
+                    QuizTitle = h.Quiz.Title,
+                    h.Quiz.Type,
+                    h.Score,
+                    h.SubmittedAt
+                })
+                .ToListAsync();
+
+            histories.Reverse();
+
+            var points = histories
+                .Select((h, index) => new PerformancePointResponse
+                {
+                    Attempt = index + 1,
+                    QuizId = h.QuizId,
+                    Type = h.Type,
+                    Score = h.Score!.Value,
+                    SubmittedAt = h.SubmittedAt!.Value
+                })
+                .ToList();
+
+            return points;
+        }
+
+        private async Task<SkillPerformanceResponse> GetSkillPerformance(string userId)
+        {
+            var histories = await _context.QuizHistories
+                .Where(h =>
+                    h.UserId == userId &&
+                    h.IsComplete &&
+                    h.Score != null)
+                .Select(h => new
+                {
+                    h.Quiz.Type,
+                    Score = h.Score!.Value
+                })
+                .ToListAsync();
+
+            var readingScores = histories
+                .Where(x =>
+                    x.Type == QuizType.Reading ||
+                    x.Type == QuizType.Mixed)
+                .Select(x => x.Score)
+                .ToList();
+
+            var writingScores = histories
+                .Where(x =>
+                    x.Type == QuizType.Writing ||
+                    x.Type == QuizType.Mixed)
+                .Select(x => x.Score)
+                .ToList();
+
+            var listeningScores = histories
+                .Where(x =>
+                    x.Type == QuizType.Listening ||
+                    x.Type == QuizType.Mixed)
+                .Select(x => x.Score)
+                .ToList();
+
+            var grammarScores = histories
+                .Where(x =>
+                    x.Type == QuizType.Grammar ||
+                    x.Type == QuizType.Mixed)
+                .Select(x => x.Score)
+                .ToList();
+
+            var reading = Average(readingScores);
+            var writing = Average(writingScores);
+            var listening = Average(listeningScores);
+            var grammar = Average(grammarScores);
+
+            var overallValues = new[] { reading, writing, listening, grammar }
+                .Where(x => x.HasValue)
+                .Select(x => x!.Value)
+                .ToList();
+
+            double? overall = overallValues.Count == 0
+                ? null
+                : Math.Round(overallValues.Average(), 2);
+
+            return new SkillPerformanceResponse
+            {
+                ReadingScore = NormalizeGrade(reading),
+                WritingScore = NormalizeGrade(writing),
+                ListeningScore = NormalizeGrade(listening),
+                GrammarScore = NormalizeGrade(grammar),
+                OverallScore = NormalizeGrade(overall)
+            };
+        }
+
+        private async Task<List<GradeDistributionResponse>> GetGradeDistribution(string userId)
+        {
+            var groupedGrades = await _context.QuizHistories
+                .AsNoTracking()
+                .Where(h =>
+                    h.UserId == userId &&
+                    h.IsComplete &&
+                    h.Score != null)
+                .GroupBy(h =>
+                    h.Score!.Value >= 90 ? "A" :
+                    h.Score.Value >= 70 ? "B" :
+                    h.Score.Value >= 50 ? "C" :
+                    h.Score.Value >= 40 ? "D" : "F")
+                .Select(g => new
+                {
+                    Grade = g.Key,
+                    Count = g.Count()
+                })
+                .ToListAsync();
+
+            var counts = groupedGrades.ToDictionary( x => x.Grade, x => x.Count);
+
+            var total = counts.Values.Sum();
+
+            string[] grades = ["A", "B", "C", "D", "F"];
+
+            return
+            [
+                .. grades.Select(grade =>
+                {
+                    var count = counts.GetValueOrDefault(grade, 0);
+
+                    return new GradeDistributionResponse
+                    {
+                        Grade = grade,
+                        Count = count,
+                        Percentage = total == 0
+                            ? 0
+                            : Math.Round(count * 100.0 / total, 2)
+                    };
+                })
+            ];
+        }
+
+        private static double? Average(IEnumerable<double> scores)
+        {
+            var values = scores.ToList();
+
+            return values.Count == 0
+                ? null
+                : Math.Round(values.Average(), 2);
+        }
+
+        private static string? NormalizeGrade(double? score)
+        {
+            if (!score.HasValue)
+                return null;
+
+            return score.Value switch
+            {
+                >= 90 => "A",
+                >= 70 => "B",
+                >= 50 => "C",
+                >= 40 => "D",
+                _ => "F"
+            };
+        }
+
+        public async Task<ProgressResponse> GetProgress(int limit)
+        {
+            var userId =
+                _httpContextAccessor.HttpContext?.User?.FindFirstValue(ClaimTypes.NameIdentifier)
+                ?? throw new BadHttpRequestException("User not exist");
+
+            var points = await GetPerformance(limit, userId);
+            var overall = await GetSkillPerformance(userId);
+            var streak = await GetLearningStreak(userId);
+            var gradeDistribution = await GetGradeDistribution(userId);
+
+            return new ProgressResponse
+            {
+                Points = [.. points],
+                Overall = overall,
+                Streak = streak,
+                GradeDistribution = gradeDistribution
+            };
         }
     }
 }

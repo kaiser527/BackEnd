@@ -2,6 +2,7 @@ using BackEnd.Modules.Auth;
 using BackEnd.Modules.Database;
 using BackEnd.Modules.File;
 using BackEnd.Modules.History;
+using BackEnd.Modules.Message;
 using BackEnd.Modules.QuizApp;
 using BackEnd.Modules.QuizContent;
 using BackEnd.Modules.User;
@@ -14,16 +15,12 @@ using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-
 builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddProblemDetails();
 
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 
-// Adding Swagger
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "User Auth", Version = "v1", Description = "Services to Authenticate user" });
@@ -57,13 +54,11 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-// Adding Database context 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
     options.UseSqlServer(builder.Configuration.GetConnectionString("sqlConnection"));
 });
 
-// Adding Services  
 builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<TokenService>();
 builder.Services.AddScoped<AuthService>();
@@ -71,15 +66,13 @@ builder.Services.AddScoped<FileService>();
 builder.Services.AddScoped<QuizService>();
 builder.Services.AddScoped<QuizContentService>();
 builder.Services.AddScoped<HistoryService>();
+builder.Services.AddScoped<MessageService>();
 
-// Background Services
 builder.Services.AddHostedService<BlacklistCleanupService>();
 builder.Services.AddHostedService<FileCleanupService>();
 
-// Regsitering AutoMapper
 builder.Services.AddAutoMapper(typeof(MappingProfile).Assembly);
 
-//Adding Jwt from extension method
 builder.Services.ConfigureIdentity();
 builder.Services.ConfigureJwt(builder.Configuration);
 builder.Services.ConfigureCors();
@@ -88,6 +81,8 @@ builder.Services.AddControllers().AddJsonOptions(options =>
 {
     options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
 });
+
+builder.Services.AddSignalR();
 
 var app = builder.Build();
 
@@ -109,7 +104,6 @@ if (!app.Environment.IsDevelopment())
 
 app.UseCors("CorsPolicy");
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -122,5 +116,6 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapHub<ChatHub>("/chathub");
 
 app.Run();

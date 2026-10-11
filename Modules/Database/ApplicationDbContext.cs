@@ -1,5 +1,6 @@
 ﻿using BackEnd.Modules.Auth.Entities;
 using BackEnd.Modules.History.Entities;
+using BackEnd.Modules.Message.Entities;
 using BackEnd.Modules.QuizApp.Entities;
 using BackEnd.Modules.QuizContent.Entities;
 using BackEnd.Modules.User.Entities;
@@ -18,6 +19,8 @@ namespace BackEnd.Modules.Database
         public DbSet<Answer> Answers => Set<Answer>();
         public DbSet<QuizHistory> QuizHistories => Set<QuizHistory>();
         public DbSet<UserAnswer> UserAnswers => Set<UserAnswer>();
+        public DbSet<Conversation> Conversations => Set<Conversation>();
+        public DbSet<UserMessage> Messages => Set<UserMessage>();
 
         public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
@@ -130,6 +133,56 @@ namespace BackEnd.Modules.Database
                     .WithMany(a => a.UserAnswers)
                     .HasForeignKey(e => e.SelectedAnswerId)
                     .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            // Conversation
+            builder.Entity<Conversation>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Status)
+                    .HasConversion<string>()
+                    .IsRequired();
+                entity.Property(e => e.CreatedAt)
+                    .HasColumnType("datetimeoffset");
+                entity.Property(e => e.ClosedAt)
+                    .HasColumnType("datetimeoffset");
+                entity.Property(e => e.LastMessageAt)
+                    .HasColumnType("datetimeoffset");
+                entity.HasOne(e => e.User)
+                    .WithMany(u => u.Conversations)
+                    .HasForeignKey(e => e.UserId)
+                    .OnDelete(DeleteBehavior.Cascade);
+                entity.HasOne(e => e.Staff)
+                    .WithMany()
+                    .HasForeignKey(e => e.StaffId)
+                    .OnDelete(DeleteBehavior.NoAction);
+                entity.HasIndex(e => new { e.UserId, e.Status });
+                entity.HasIndex(e => e.LastMessageAt);
+                entity.HasIndex(e => e.UserId)
+                    .IsUnique()
+                    .HasFilter("[Status] = 'Open'")
+                    .HasDatabaseName("IX_Conversations_UserId_Open");
+            });
+
+            // UserMessage
+            builder.Entity<UserMessage>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Content)
+                    .IsRequired();
+                entity.Property(e => e.CreatedAt)
+                    .HasColumnType("datetimeoffset");
+                entity.Property(e => e.ReadAt)
+                    .HasColumnType("datetimeoffset");
+                entity.HasOne(e => e.Conversation)
+                    .WithMany(c => c.Messages)
+                    .HasForeignKey(e => e.ConversationId)
+                    .OnDelete(DeleteBehavior.Cascade);
+                entity.HasOne(e => e.Sender)
+                    .WithMany(u => u.Messages)
+                    .HasForeignKey(e => e.SenderId)
+                    .OnDelete(DeleteBehavior.NoAction);
+                entity.HasIndex(e => new { e.ConversationId, e.CreatedAt });
             });
         }
     }
