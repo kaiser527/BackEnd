@@ -1,5 +1,4 @@
 ﻿using BackEnd.Modules.History.Entities;
-using BackEnd.Modules.Message.Entities;
 using BackEnd.Utils.Helper;
 using Microsoft.AspNetCore.Identity;
 
@@ -16,7 +15,5 @@ namespace BackEnd.Modules.User.Entities
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
         public ICollection<QuizHistory> QuizHistories { get; set; } = [];
-        public ICollection<Conversation> Conversations { get; set; } = [];
-        public ICollection<UserMessage> Messages { get; set; } = [];
     }
 }

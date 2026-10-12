@@ -2,7 +2,6 @@ using BackEnd.Modules.Auth;
 using BackEnd.Modules.Database;
 using BackEnd.Modules.File;
 using BackEnd.Modules.History;
-using BackEnd.Modules.Message;
 using BackEnd.Modules.QuizApp;
 using BackEnd.Modules.QuizContent;
 using BackEnd.Modules.User;
@@ -66,7 +65,6 @@ builder.Services.AddScoped<FileService>();
 builder.Services.AddScoped<QuizService>();
 builder.Services.AddScoped<QuizContentService>();
 builder.Services.AddScoped<HistoryService>();
-builder.Services.AddScoped<MessageService>();
 
 builder.Services.AddHostedService<BlacklistCleanupService>();
 builder.Services.AddHostedService<FileCleanupService>();
@@ -116,6 +114,5 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
-app.MapHub<ChatHub>("/chathub");
 
 app.Run();
