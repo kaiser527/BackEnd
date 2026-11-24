@@ -407,14 +407,6 @@ namespace BackEnd.Modules.QuizContent
                 if (requestContent == null)
                     return true;
 
-                if (existingContent.Instruction != requestContent.Instruction ||
-                    existingContent.Passage != requestContent.Passage ||
-                    existingContent.AudioUrl != requestContent.AudioUrl ||
-                    existingContent.Image != requestContent.Image)
-                {
-                    return true;
-                }
-
                 var existingQuestions = existingContent.Questions.ToList();
                 var requestedQuestions = requestContent.Questions.ToList();
 

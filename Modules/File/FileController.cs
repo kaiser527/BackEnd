@@ -17,9 +17,9 @@ namespace BackEnd.Modules.File
         [HttpPost("upload")]
         [Authorize]
         public async Task<IActionResult> Upload(
-             IFormFile fileUpload,
-             [FromHeader(Name = "folder_type")] UploadFolder folder,
-             [FromQuery] FileType fileType = FileType.Image
+            IFormFile fileUpload,
+            [FromHeader(Name = "folder_type")] UploadFolder folder,
+            [FromQuery] FileType fileType = FileType.Image
         )
         {
             return await ExceptionWrapper.Execute(async () =>
